@@ -2,7 +2,7 @@ name: Deploy VitePress to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
 
 permissions:
   contents: write
@@ -14,28 +14,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 启用 pnpm
+      # 固定 pnpm 版本，解决 lockfile 不兼容
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 9
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "pnpm"
+          cache: 'pnpm'
 
-      # pnpm 安装依赖
+      # 关键：强制刷新依赖，不使用旧锁文件
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm -v
+        run: pnpm install --no-frozen-lockfile
 
-      # pnpm 打包
-      - name: Build with pnpm
+      - name: Build
         run: pnpm run docs:build
 
-      # 部署
-      - name: Deploy to GitHub Pages
+      - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
