@@ -2,28 +2,41 @@ name: Deploy VitePress to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 permissions:
   contents: write
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      # 启用 pnpm
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
         with:
-          node-version: 22
+          version: 8
 
-      - run: npm i pnpm
-      - run: pnpm install
-      - run: pnpm stub
-      - run: pnpm docs:build  # VitePress 打包命令
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
 
-      - name: Deploy
+      # pnpm 安装依赖
+      - name: Install dependencies
+        run: pnpm install
+
+      # pnpm 打包
+      - name: Build with pnpm
+        run: pnpm run docs:build
+
+      # 部署
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/.vitepress/dist
+          publish_dir: ./docs/.vitepress/dist
