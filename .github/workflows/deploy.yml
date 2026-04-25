@@ -2,7 +2,7 @@ name: Deploy VitePress to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 permissions:
   contents: write
@@ -24,11 +24,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+          cache: "pnpm"
+
+      - name: Check pnpm version
+        run: pnpm -v
 
       # 关键：强制刷新依赖，不使用旧锁文件
       - name: Install dependencies
-        run: pnpm -v
         run: pnpm install --no-frozen-lockfile
 
       - name: Build
