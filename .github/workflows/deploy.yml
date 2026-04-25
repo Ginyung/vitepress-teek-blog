@@ -26,9 +26,6 @@ jobs:
           node-version: 20
           cache: "pnpm"
 
-      - name: Check pnpm version
-        run: pnpm -v
-
       # 关键：强制刷新依赖，不使用旧锁文件
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
