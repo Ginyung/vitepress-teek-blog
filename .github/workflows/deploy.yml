@@ -14,11 +14,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 固定 pnpm 版本，解决 lockfile 不兼容
+      # 自动使用你项目 package.json 里的 pnpm 版本（不冲突）
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          run_install: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -26,14 +26,14 @@ jobs:
           node-version: 20
           cache: "pnpm"
 
-      # 关键：强制刷新依赖，不使用旧锁文件
+      # 核心安装（兼容你的 lockfile）
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install
 
-      - name: Build
+      - name: Build VitePress
         run: pnpm run docs:build
 
-      - name: Deploy
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
