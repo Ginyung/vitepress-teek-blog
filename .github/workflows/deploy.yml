@@ -23,15 +23,18 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: "pnpm"
 
       # 核心安装（兼容你的 lockfile）
       - name: Install dependencies
         run: pnpm install
 
+      - name: pre build
+        run: pnpm stub
+
       - name: Build VitePress
-        run: pnpm run docs:build
+        run: pnpm docs:build
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
