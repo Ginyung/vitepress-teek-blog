@@ -1,0 +1,60 @@
+name: Deploy VitePress to My Server
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Pre build
+        run: pnpm stub
+
+      - name: Build VitePress
+        run: pnpm docs:build
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVERSSHKEY_B64 }}" | base64 -d > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${{ secrets.SERVERPORT }}" "${{ secrets.SERVERHOST }}" >> ~/.ssh/known_hosts
+
+      - name: Verify SSH key
+        run: |
+          ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null
+
+      - name: Test SSH connection
+        run: |
+          ssh -i ~/.ssh/id_ed25519 \
+            -p "${{ secrets.SERVERPORT }}" \
+            -o StrictHostKeyChecking=no \
+            "${{ secrets.SERVERUSER }}@${{ secrets.SERVERHOST }}" \
+            "echo SSH connection successful"
+
+      - name: Deploy to server
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SERVERPORT }} -o StrictHostKeyChecking=no" \
+            docs/.vitepress/dist/ \
+            "${{ secrets.SERVERUSER }}@${{ secrets.SERVERHOST }}:/srv/vitepress-site/current/"
