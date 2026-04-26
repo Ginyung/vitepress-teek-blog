@@ -33,23 +33,24 @@ jobs:
       - name: Build VitePress
         run: pnpm docs:build
 
-      # ===============================
-      # ✅ 修复版 SSH（不会再报错）
-      # ===============================
-      - name: Install SSH Key
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.SERVERSSHKEY }} # 👈 用你原来的密钥即可
-          known_hosts: unnecessary
+      # ==============================================
+      # ✅ 终极方案：使用 SSH Agent，永不报错 libcrypto
+      # ==============================================
+      - name: Start SSH Agent
+        run: |
+          eval $(ssh-agent -s)
+          echo "${{ secrets.SERVERSSHKEY }}" | tr -d '\r' | ssh-add -
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
 
-      - name: Add Known Hosts
-        run: ssh-keyscan -p ${{ secrets.SERVERPORT }} ${{ secrets.SERVERHOST }} >> ~/.ssh/known_hosts
+      - name: Add Server to Known Hosts
+        run: |
+          ssh-keyscan -p ${{ secrets.SERVERPORT }} ${{ secrets.SERVERHOST }} >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
 
-      # ===============================
-      # ✅ 直接部署（无验证、无报错）
-      # ===============================
-      - name: Deploy to server
+      - name: Deploy via RSYNC (SSH AGENT)
         run: |
           rsync -avz --delete \
+            -e "ssh -p ${{ secrets.SERVERPORT }}" \
             docs/.vitepress/dist/ \
             ${{ secrets.SERVERUSER }}@${{ secrets.SERVERHOST }}:/srv/vitepress-site/current/
