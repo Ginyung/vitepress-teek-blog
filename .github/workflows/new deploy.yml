@@ -33,24 +33,19 @@ jobs:
       - name: Build VitePress
         run: pnpm docs:build
 
-      # ==============================================
-      # ✅ 终极方案：使用 SSH Agent，永不报错 libcrypto
-      # ==============================================
-      - name: Start SSH Agent
+      - name: Write SSH Key
         run: |
-          eval $(ssh-agent -s)
-          echo "${{ secrets.SERVERSSHKEY }}" | tr -d '\r' | ssh-add -
           mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
+          echo "${{ secrets.SERVERSSHKEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-      - name: Add Server to Known Hosts
+      - name: Add Known Hosts
         run: |
           ssh-keyscan -p ${{ secrets.SERVERPORT }} ${{ secrets.SERVERHOST }} >> ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
 
-      - name: Deploy via RSYNC (SSH AGENT)
+      - name: Deploy
         run: |
           rsync -avz --delete \
-            -e "ssh -p ${{ secrets.SERVERPORT }}" \
+            -e "ssh -i ~/.ssh/id_rsa -p ${{ secrets.SERVERPORT }}" \
             docs/.vitepress/dist/ \
             ${{ secrets.SERVERUSER }}@${{ secrets.SERVERHOST }}:/srv/vitepress-site/current/
