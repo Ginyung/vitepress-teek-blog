@@ -1,21 +1,17 @@
-name: Deploy VitePress to server
+name: Deploy VitePress to My Server
 
 on:
   push:
     branches: [main]
-  workflow_dispatch: # 手动触发开关
-
-permissions:
-  contents: write
+  workflow_dispatch: # 👈 这一行就是手动触发开关
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      # 自动使用你项目 package.json 里的 pnpm 版本（不冲突）
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -27,7 +23,6 @@ jobs:
           node-version: 22
           cache: "pnpm"
 
-      # 核心安装（兼容你的 lockfile）
       - name: Install dependencies
         run: pnpm install
 
@@ -37,8 +32,13 @@ jobs:
       - name: Build VitePress
         run: pnpm docs:build
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/.vitepress/dist
+      - name: Deploy to Server
+        uses: easingthemes/ssh-deploy@v5
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SERVERSSHKEY }}
+          REMOTE_HOST: ${{ secrets.SERVERHOST }}
+          REMOTE_PORT: ${{ secrets.SERVERPORT }}
+          REMOTE_USER: ${{ secrets.SERVERUSER }}
+          SOURCE: "docs/.vitepress/dist/"
+          TARGET: "/srv/vitepress-site/current" # 👈 记得改成你服务器真实路径
+          ARGS: "-avz --delete"
