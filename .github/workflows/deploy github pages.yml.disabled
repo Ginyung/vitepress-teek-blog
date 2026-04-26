@@ -1,9 +1,8 @@
-name: Deploy VitePress to server
+name: Deploy VitePress to GitHub Pages
 
 on:
   push:
     branches: [main]
-  workflow_dispatch: # 手动触发开关
 
 permissions:
   contents: write
