@@ -33,12 +33,12 @@ jobs:
         run: pnpm docs:build
 
       - name: Deploy to Server
-        uses: easingthemes/ssh-deploy@v5
+        uses: easingthemes/ssh-deploy@v4
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SERVERSSHKEY }}
           REMOTE_HOST: ${{ secrets.SERVERHOST }}
           REMOTE_PORT: ${{ secrets.SERVERPORT }}
           REMOTE_USER: ${{ secrets.SERVERUSER }}
           SOURCE: "docs/.vitepress/dist/"
-          TARGET: "/srv/vitepress-site/current" # 👈 记得改成你服务器真实路径
+          TARGET: "/srv/vitepress-site/current"
           ARGS: "-avz --delete"
