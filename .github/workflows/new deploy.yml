@@ -1,0 +1,55 @@
+name: Deploy VitePress to My Server
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Pre build
+        run: pnpm stub
+
+      - name: Build VitePress
+        run: pnpm docs:build
+
+      # ===============================
+      # ✅ 修复版 SSH（不会再报错）
+      # ===============================
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SERVERSSHKEY }} # 👈 用你原来的密钥即可
+          known_hosts: unnecessary
+
+      - name: Add Known Hosts
+        run: ssh-keyscan -p ${{ secrets.SERVERPORT }} ${{ secrets.SERVERHOST }} >> ~/.ssh/known_hosts
+
+      # ===============================
+      # ✅ 直接部署（无验证、无报错）
+      # ===============================
+      - name: Deploy to server
+        run: |
+          rsync -avz --delete \
+            docs/.vitepress/dist/ \
+            ${{ secrets.SERVERUSER }}@${{ secrets.SERVERHOST }}:/srv/vitepress-site/current/
