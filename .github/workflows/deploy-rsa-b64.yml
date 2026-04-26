@@ -36,17 +36,17 @@ jobs:
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SERVERSSHKEY_B64 }}" | base64 -d > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
+          printf "%s" "${{ secrets.SERVERSSHKEY_RSA_B64 }}" | base64 -d > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -p "${{ secrets.SERVERPORT }}" "${{ secrets.SERVERHOST }}" >> ~/.ssh/known_hosts
 
       - name: Verify SSH key
         run: |
-          ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null
+          ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null
 
       - name: Test SSH connection
         run: |
-          ssh -i ~/.ssh/id_ed25519 \
+          ssh -i ~/.ssh/id_rsa \
             -p "${{ secrets.SERVERPORT }}" \
             -o StrictHostKeyChecking=no \
             "${{ secrets.SERVERUSER }}@${{ secrets.SERVERHOST }}" \
@@ -55,6 +55,6 @@ jobs:
       - name: Deploy to server
         run: |
           rsync -avz --delete \
-            -e "ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SERVERPORT }} -o StrictHostKeyChecking=no" \
+            -e "ssh -i ~/.ssh/id_rsa -p ${{ secrets.SERVERPORT }} -o StrictHostKeyChecking=no" \
             docs/.vitepress/dist/ \
             "${{ secrets.SERVERUSER }}@${{ secrets.SERVERHOST }}:/srv/vitepress-site/current/"
